@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+
+
+
+	<!-- main page of my application
+	The page diplays logs. There is a form with several fields (like date/time, instance, keyword...) that we have to fill out to display 
+	what we want to see. So it doesn't display the log entirely, it displays only 100 lines. I used a lot Ajax to update what is displayed.
+	We can add the next/previous 100 lines for example. We can also select a different occurence of a keyword that we found...
+	
+	-->
+
+
+
+
+
+	<head>
+	
+		  <title>Affichage des logs</title>
+		  <meta charset="utf-8">
+		  <meta name="viewport" content="width=device-width, initial-scale=1">
+		  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		  <link rel="stylesheet" href="style1.css" />
+	
+	</head>
+
+
+
+
+	<body>
+	
+			<nav class="navbar navbar-default" style="background-color: silver">
+			  <div class="container-fluid">
+			    <div class="navbar-header">
+			      <a class="navbar-brand" href="#">ReversysLogReader</a>
+			    </div>
+			    <ul class="nav navbar-nav">
+			      <li style="width: 210px;"><p></p></li>
+			      <li><a href="#">Accueil</a></li>
+			      <li class="active"><a href="#">Affichage des logs</a></li>
+			      <li><a href="administration.html">Administration</a></li>		
+			      <li><a href="#">Mon compte</a></li>
+			      <li><a href="deconnexion">Se déconnecter</a></li> 
+			    </ul>
+			  </div>
+			</nav>
+		  
+		  
+		  
+		  
+			<div class="container-fluid">
+			  
+			  
+			  	<div class="row">
+			  	
+			         
+					         
+						<form method="post" action="affichagelog">
+													 
+							<div class="col-md-1">
+													 
+														 
+								<label for="nominstance">Instance ?*</label><br />
+								<select name="nominstance" id="nominstance" required>
+									<option value=""></option>
+									#foreach($instance in $instancelist)
+									<option value="${instance.getName().toString()}">$instance.getName().toString()</option>  
+									#end
+								</select>
+														 
+													   
+							</div>
+													   
+													   
+							<div class="col-md-1">
+													 
+														 
+								<label for="nom_module">Module ?*</label><br />
+								<select name="nom_module" id="nom_module" required>
+									<option value=""></option>
+									<option value="batch">batch</option>
+									<option value="front-office">front-office</option>
+									<option value="middle-office">middle-office</option>
+									<option value="sftp">sftp</option>
+									<option value="shell">shell</option>
+									<option value="webservices">webservices</option>
+								</select>
+														 
+													   
+							</div>
+													   
+													   
+													       
+							<div class="col-md-2">
+													       
+								<label for="datetime1">Date et heure*</label>
+								<input type="datetime-local" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}" name="datetime1" title="format firefox: aaaa-mm-jjThh:mm" id="datetime1" required/>
+													       
+							</div>  
+													       
+													       
+													       
+													       
+							<div class="col-md-2">
+													       
+								<label for="recherche">Recherche 
+								#if ($keyword_introuvable == true)
+								<div id="keyword_introuvable">Keyword introuvable</div> 
+								#end</label>						
+								<input type="search" name="recherche" id="recherche" size="20"/>
+													       
+							</div>  
+													       
+													       
+													       
+													       
+							<div class="col-md-1">
+													       		
+								<input class="btn btn-primary" id="bouton_reset" type="reset" value="Reset">
+					       		<input class="btn btn-primary" id="bouton_envoi" type="submit" value="Afficher">
+													       
+							</div>  
+													       
+													       
+								
+													       
+						</form>
+													  
+													  
+													  		
+						<div class="col-md-1">
+						</div> 
+													  		
+		  													
+		  				#if ("$!recherchefieldvalue" !="" && $keyword_introuvable == false)	
+		  													
+		  					<div class="col-md-1">
+													   
+								<input type="button" name="fleche_gauche" id="fleche_gauche" value="precedent" />
+								<input type="hidden" name="numOccurence" id="numOccurence" value="0"/>
+													       	  						       	   
+							</div>  
+													       	
+													       	
+							<div class="col-md-1">
+													       	
+								<div id="display_numOccurence"></div>
+													       	
+							</div>  
+													       	
+													       	
+							<div class="col-md-1">
+													   
+								<input type="button" name="fleche_droite" id="fleche_droite" value="suivant" />
+													       	   
+							</div>  
+													       	
+						#else
+													       	
+							<div class="col-md-1">
+							   	<input type="hidden" name="numOccurence" id="numOccurence" value="0"/>
+							</div> 
+													       	
+							<div class="col-md-1">
+							</div> 
+													       	
+							<div class="col-md-1">
+							</div> 
+													       	
+						#end 
+		  
+		   
+		  				#if ($enabled == true)			
+		  					
+		  					<div class="col-md-1">
+													   
+								<input type="button" name="haut" id="haut" value="haut" />
+								<input type="button" name="bas" id="bas" value="bas" />
+													       	   
+							</div>  
+							
+		  				#end 
+		  
+		   			</div>
+		  
+	
+		   		<pre id="loglocation" tabindex="0">$filecontentpart</pre> 
+		   		
+			</div>
+		
+		
+			<script src="http://code.jquery.com/jquery.min.js"></script>
+			
+			
+			<script>
+			
+			
+					var numero_occurence=0;
+					var numero_clic=0;
+					var nombre_clic_haut=0;
+					
+					#if ("$!recherchefieldvalue" !="" && $keyword_introuvable == false)		
+						document.getElementById('display_numOccurence').innerHTML = "Occurence "+ numero_occurence;
+					#end
+				
+					var currentSelectedFile = "$log_selected_path";
+					var current_index_wholefilecontent = "$initial_substringstartindex";
+					
+					var currentDownSelectedFile = "$log_selected_path";
+					var current_down_index_wholefilecontent = "$initial_substringendindex";
+					
+					var i2=0;
+					
+					
+			 		
+			 	
+			 		$(function() {
+			 				
+			 			
+			 			
+			 			$("#nominstance").val("$!instancenameselected");
+			 			$("#nom_module").val("$!modulenameselected");
+			 			
+			 			$("#datetime1").val("$!datetimefieldvalue");
+			 			$("#recherche").val("$!recherchefieldvalue");
+			 			
+						 
+			 	        $('#fleche_gauche').click(function() {
+			 	        	
+			 	           	numero_occurence--;
+			 	           	document.getElementById('numOccurence').value = numero_occurence;
+			 	           	document.getElementById('display_numOccurence').innerHTML = "Occurence "+ numero_occurence;
+			 	    		
+			 	        	
+					 		$.post(
+					 			    'AjaxProcessingSearch', 								
+					 			    {
+					 			       folder_moduleSelected_path : "$folder_moduleSelected_path",
+					 			       log_selected_path: "$log_selected_path",
+					 			       current_fileCreation_date: "$current_fileCreation_date",
+					 			       recherche : "$recherchefieldvalue",
+					 			       numOccurence : numero_occurence,							
+					 			       i2: i2,
+					 			       datetime1 : "$datetimefieldvalue"
+					 			    },
+					 			    function (data){	
+					 			    
+					 			    		$("#loglocation").html(data);
+					 			    	
+					 			    },
+					 			   "html"
+					 			    
+					 			);
+			 	      
+					 	});  
+			 		 
+			 	        
+			 	        
+			 	       $('#fleche_droite').click(function() {
+			
+			 	    	  
+			 	    	   
+			 	    		numero_occurence++;
+			 	        	document.getElementById('numOccurence').value = numero_occurence; 
+			 	        	document.getElementById('display_numOccurence').innerHTML = "Occurence "+ numero_occurence;
+			 	        	
+			 	    	   
+			 	    	   
+					 		$.post(
+					 			    'AjaxProcessingSearch', 			
+					 			    {
+					 			       log_selected_path: "$log_selected_path",
+					 			       recherche : "$recherchefieldvalue",
+					 			       numOccurence : numero_occurence,								
+					 			       datetime1 : "$datetimefieldvalue"
+					 			    },
+					 			    function (data){	
+					 			    	
+						 			   $("#loglocation").html(data);  
+						 			   
+					 			    },
+					 			    "html"					
+					 			);
+					  });    
+			 	             
+			 	       
+			 	       
+			 	       
+			 	       
+			 	      $('#haut').click(function() {
+			
+				    	   
+					 		$.post(
+					 			    'AjaxProcessingAdditionUp', 			
+					 			    {		
+					 			    		log_selected_path: currentSelectedFile,
+						 			    recherche : "$recherchefieldvalue",
+						 			    numOccurence : numero_occurence,
+						 			    nombre_clic_haut : nombre_clic_haut,	
+						 			    folder_moduleSelected_path : "$folder_moduleSelected_path",
+						 			    current_fileCreation_date: "$current_fileCreation_date",
+						 			    current_index_wholefilecontent : current_index_wholefilecontent,
+						 			    datetime1 : "$datetimefieldvalue"
+					 			    },
+					 			    function (data){	
+					 			    	
+						 			      $("#loglocation").prepend(data.filecontentpart+"\n"+"-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"+"\n");
+						 			      currentSelectedFile = data.new_log_selected_path;
+						 			      current_index_wholefilecontent = data.current_index_wholefilecontent;
+					 			    },
+					 			    "json"					
+					 			);
+					 		
+					 		  nombre_clic_haut+=3;  
+					 	 });    
+			 	      
+			 	      
+			 	      
+			 	     $('#bas').click(function() {
+			
+				    	   
+					 		$.post(
+					 			    'AjaxProcessingAdditionDown', 							
+					 			    {
+					 			    	
+					 			   numClic : numero_clic,
+					 			   log_selected_path: currentDownSelectedFile,
+					 			   recherche : "$recherchefieldvalue",
+					 			   numOccurence : numero_occurence,
+					 			   folder_moduleSelected_path : "$folder_moduleSelected_path",
+					 			   current_fileCreation_date: "$current_fileCreation_date",
+					 			   current_down_index_wholefilecontent : current_down_index_wholefilecontent,
+					 			   datetime1 : "$datetimefieldvalue"
+					 			       
+					 			    },
+					 			    function (data){	
+					 			 
+						 			      $("#loglocation").append("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"+"\n"+data.filecontentpart);
+						 	
+						 			  	 currentDownSelectedFile = data.new_log_selected_path;
+						 			     current_down_index_wholefilecontent = data.current_down_index_wholefilecontent;
+						 			       
+					 			    },
+					 			    "json"					
+					 			);
+					 		
+					 		numero_clic+=100;
+					 	 });    
+			 	       
+			 	     
+			 	     
+			 	    #if ($enabled == true)
+			 	     
+			 	   
+				 	    $("#loglocation").keydown(function( event ) { 	
+				 	    	
+				 	    		
+				 	   		console.log("scrollTop="+$("#loglocation").scrollTop());
+				 	  		console.log("scrollHeight="+$("#loglocation").prop("scrollHeight")+" , clientHeight="+ $("#loglocation").prop("clientHeight"));
+				 	    	
+				 	   		var elt = $("#loglocation");
+				 	  		console.log(elt.scrollTop()-(elt.prop("scrollHeight")-elt.prop("clientHeight")) )
+				 	    	 
+				 	    	  if ( event.which == 40 && elt.scrollTop()-(elt.prop("scrollHeight")-elt.prop("clientHeight")) >=0 ) {
+				 	    		     
+				 	    		  
+				 	    		 $.post(
+				 		 			    'AjaxProcessingAdditionDown', 							
+				 		 			    {
+				 		 			       
+				 		 			   
+				 			 			   numClic : numero_clic,
+				 			 			   log_selected_path: currentDownSelectedFile,
+				 			 			   recherche : "$recherchefieldvalue",
+				 			 			   numOccurence : numero_occurence,
+				 			 			   folder_moduleSelected_path : "$folder_moduleSelected_path",
+				 			 			   current_fileCreation_date: "$current_fileCreation_date",
+				 			 			   current_down_index_wholefilecontent : current_down_index_wholefilecontent,
+				 			 			   datetime1 : "$datetimefieldvalue"
+				 			 			       
+				 		 			       
+				 		 			    },
+				 		 			    function (data){	
+				 		 			    	
+				 		 			    	  
+				 			 			     $("#loglocation").append("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"+"\n"+data.filecontentpart);
+				 						 	
+							 			  	 currentDownSelectedFile = data.new_log_selected_path;
+							 			     current_down_index_wholefilecontent = data.current_down_index_wholefilecontent;
+							 			       
+				 			 			       
+				 		 			    },
+				 		 			    "json"					
+				 		 			);
+				 		 		
+				 		 		numero_clic+=3;  
+				 	    		
+				 	    	  }
+				 	    	  
+				 	    	 if ( event.which == 38 ) {
+					    		  
+				 	     	       
+				 	     	    if ($("#loglocation").scrollTop()==0){
+				 	     	    		  
+				 	     	    		 $.post(
+				 	     		 			    'AjaxProcessingAdditionUp', 							
+				 	     		 			    {
+				 	     		 			        		
+				 	  		 			    		log_selected_path: currentSelectedFile,
+				 	  			 			    recherche : "$recherchefieldvalue",
+				 	  			 			    numOccurence : numero_occurence,
+				 	  			 			    nombre_clic_haut : nombre_clic_haut,	
+				 	  			 			    folder_moduleSelected_path : "$folder_moduleSelected_path",
+				 	  			 			    current_fileCreation_date: "$current_fileCreation_date",
+				 	  			 			    current_index_wholefilecontent : current_index_wholefilecontent,
+				 	  			 		   	 	datetime1 : "$datetimefieldvalue"
+				 	     		 			       
+				 	     		 			    },
+				 	     		 			    function (data){	
+				 	     		 			    	 	   
+				 	   			 			      $("#loglocation").prepend(data.filecontentpart+"\n"+"-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"+"\n");
+				 	   			 			      currentSelectedFile = data.new_log_selected_path;
+				 	   			 			      current_index_wholefilecontent = data.current_index_wholefilecontent;      
+				 	     			 			      
+				 	     		 			    },
+				 	     		 			    "json"					
+				 	     		 			);
+				 	     		 		
+				 	     	    		nombre_clic_haut+=3;
+				 	     	    		
+				 	     	    	  }  
+				 	    	  
+				 	    	 }
+				 	    	    	  
+				 	    	  
+				 	    	 });
+				 	    
+				 	#end
+			 	    
+				 });
+			 		
+			  </script>
+			  
+	</body>
+</html>
